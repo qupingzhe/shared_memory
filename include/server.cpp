@@ -53,7 +53,7 @@ void Server::applyBlock( void )
 	int ptr = -1;
 	if( (ptr = findBlock(0)) >= 0 ) {
 		blocks[ptr]->owner = command->pid;
-		command->request = (char*)blocks[ptr] - (char*)address;
+		command->request = (char*)( &(blocks[ptr]->file) - (char*)address );
 		command->type = 0;
 	}
 	else {
