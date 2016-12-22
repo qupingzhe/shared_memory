@@ -10,6 +10,7 @@ class Server
 {
 public:
 	Server( void );
+	~Server( void );
 	void applyBlock( void );
 	void releaseBlock( void );
 	void getFile( void );

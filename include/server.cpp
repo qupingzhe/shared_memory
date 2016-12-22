@@ -29,6 +29,12 @@ Server::Server( void )
 		pMemory += sizeof(Block_t);
 	}
 }
+Server::~Server( void )
+{
+	shmdt( address );
+	shmctl( shmid, IPC_RMID, NULL );
+	semctl( semid, 0, IPC_RMID );
+}
 
 int Server::findBlock( pid_t owner )
 {
