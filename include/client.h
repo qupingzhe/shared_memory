@@ -4,9 +4,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdint.h>
-#include "shared_memory.h"
 
-class Client
+#include <shared_memory.h>
+
+class Client : public SharedMemory
 {
 public:
 	static struct sembuf semP;
@@ -15,16 +16,15 @@ public:
 	Client();
 	~Client( void );
 
-	void applyBlock( void );
-	void releaseBlock( void );
+	int applyBlock( void );
+	int releaseBlock( void );
 
-	void putFile( void );
-	void getFile( void );
+	int putFile( void );
+	int getFile( void );
 
-	void showDirectory( void );
+	int showDirectory( void );
 
-	uint8_t getCommandType( void );
-	bool waitNewCommand( void );
+	bool hasNewCommand( void );
 
 	void setCommand( uint8_t commandType );
 	void resetCommand( void );
@@ -39,12 +39,8 @@ public:
 	void getFile( File_t* file );
 
 private:
-	int shmid;
-	int semid;
-	void* address;
 
 	struct File_t* file;
-	struct Command_t* command;
 };
 
 #endif

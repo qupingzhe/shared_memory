@@ -1,7 +1,7 @@
 #ifndef SERVER_DEF_H
 #define SERVER_DEF_H
 
-#include "shared_memory.h"
+#include <shared_memory.h>
 
 struct Block_t
 {

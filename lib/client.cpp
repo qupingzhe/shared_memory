@@ -1,27 +1,14 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 #include <string.h>
-#include "client.h"
 
-#include <stdio.h>
+#include <client.h>
 
 struct sembuf Client::semP = { 0, -1, 0 };
 struct sembuf Client::semV = { 0, 1, 0 };
 
-Client::Client( void ) 
-{
-	semid = semget( SEM_KEY, 1,  IPC_CREAT|0777 );
-	shmid = shmget( SHM_KEY, 0, IPC_CREAT|0777 );
-	if( semid < 0 ) {
-		printf("SEM\n");
-	}
-	if( shmid < 0 ) {
-		printf("SHM\n");
-	}
-	address = shmat( shmid, NULL, 0 );
+Client::Client( void ) : SharedMemory( 0 ) { }
 
-	command = (Command_t*)address;
-}
 
 Client::~Client( void )
 {
@@ -29,56 +16,87 @@ Client::~Client( void )
 }
 
 
-void Client::applyBlock( void )
+int Client::applyBlock( void )
 {
+	errorFlag = 0;
 	setCommand( APPLY );
-	waitNewCommand();
-	file = (File_t*)((char*)address + command->request );
-	resetCommand();
-}
-
-void Client::releaseBlock( void )
-{
-	setCommand( RELEASE );
-	waitNewCommand();
-
-	resetCommand();
-}
-
-
-void Client::putFile( void )
-{
-	setCommand( PUT );
-	waitNewCommand();
-	resetCommand();
-}
-
-void Client::getFile( void )
-{
-	setCommand( GET );
-	waitNewCommand();
-	resetCommand();
-}
-
-
-void Client::showDirectory( void )
-{
-	setCommand( SHOW );
-	waitNewCommand();
-	resetCommand();
-}
-
-
-uint8_t Client::getCommandType( void )
-{
-	return command->type;
-}
-
-bool Client::waitNewCommand( void )
-{
-	while( !(command->hasError)  && !(command->request) )
-	{
+	hasNewCommand();
+	if( !command->hasError ) {
+		file = (File_t*)((char*)address + command->request );
 	}
+	else {
+		errorFlag = command->hasError;
+	}
+	resetCommand();
+	return errorFlag;
+}
+
+int Client::releaseBlock( void )
+{
+	errorFlag = 0;
+	setCommand( RELEASE );
+	hasNewCommand();
+	if( !command->hasError ) {
+
+	}
+	else {
+		errorFlag = command->hasError;
+	}
+	resetCommand();
+	return errorFlag;
+}
+
+
+int Client::putFile( void )
+{
+	errorFlag = 0;
+	setCommand( PUT );
+	hasNewCommand();
+	if( !command->hasError ) {
+
+	}
+	else {
+		errorFlag = command->hasError;
+	}
+	resetCommand();
+	return errorFlag;
+}
+
+int Client::getFile( void )
+{
+	errorFlag = 0;
+	setCommand( GET );
+	hasNewCommand();
+	if( !command->hasError ) {
+
+	}
+	else {
+		errorFlag = command->hasError;
+	}
+	resetCommand();
+	return errorFlag;
+}
+
+
+int Client::showDirectory( void )
+{
+	errorFlag = 0;
+	setCommand( SHOW );
+	hasNewCommand();
+	if( !command->hasError ) {
+
+	}
+	else {
+		errorFlag = command->hasError;
+	}
+	resetCommand();
+	return errorFlag;
+}
+
+
+bool Client::hasNewCommand( void )
+{
+	while( !(command->hasError)  && !(command->request) );
 	return true;
 }
 
