@@ -9,20 +9,28 @@ const int MAX_FILE_SIZE = 1000;
 const int MAX_FILE_NUMBER = 10;
 const int MAX_BLOCK_NUMBER = 4;
 
+enum Error
+{
+	NO_PID = 1,
+	NO_BLOCK = 2,
+	NO_FILE = 3,
+	NO_DIR = 4
+};
+
 enum CommantType
 {
-	APPLY,
-	RELEASE,
-	GET,
-	PUT,
-	SHOW
+	APPLY = 1,
+	RELEASE = 2,
+	GET = 4,
+	PUT = 8,
+	SHOW = 16
 };
 
 struct Command_t
 {
 	uint8_t type;
 	pid_t pid;
-	bool hasError;
+	uint8_t hasError;
 	int request;
 };
 
