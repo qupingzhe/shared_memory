@@ -3,16 +3,30 @@
 #include <string.h>
 #include "server.h"
 
+#include <stdio.h>
+
+union semun
+{
+	int val;
+	struct semid_ds* buf;
+	unsigned short * array;
+};
+
 Server::Server( void )
 {
 	semid = semget( SEM_KEY, 1,  IPC_CREAT|0777 );
+	semun arg;
+	arg.val = 1;
+	semctl( semid, 0,SETVAL, arg );
+	
 	size_t size = 0;
 	size += sizeof(Command_t);
 	size += sizeof(Information_t);
 	size += sizeof(Block_t)*MAX_BLOCK_NUMBER;
-
 	shmid = shmget( SHM_KEY, size, IPC_CREAT|0777 );
+
 	address = shmat( shmid, NULL, 0 );
+	memset( address, 0, size );
 
 	char* pMemory = (char*)address;
 	
@@ -29,6 +43,7 @@ Server::Server( void )
 		pMemory += sizeof(Block_t);
 	}
 }
+
 Server::~Server( void )
 {
 	shmdt( address );
@@ -53,12 +68,12 @@ void Server::applyBlock( void )
 	int ptr = -1;
 	if( (ptr = findBlock(0)) >= 0 ) {
 		blocks[ptr]->owner = command->pid;
-		command->request = (char*)( &(blocks[ptr]->file) - (char*)address );
-		command->type = 0;
+		command->request = (char*)( &(blocks[ptr]->file) ) - (char*)address ;
 	}
 	else {
-		command->hasError = true;
+		command->hasError = NO_BLOCK;
 	}
+	while( command->pid != 0 );
 }
 
 void Server::releaseBlock( void )
@@ -67,46 +82,49 @@ void Server::releaseBlock( void )
 	if( (ptr = findBlock(command->pid) ) >= 0 ) {
 		blocks[ptr]->owner = 0;
 		command->request = 1;
-		command->type = 0;
 	}
 	else {
-		command->hasError = true;
+		command->hasError = NO_PID;
 	}
+	while( command->pid != 0 );
 }
 
 void Server::showDirectory( void )
 {
 	int pBlock = findBlock( command->pid );
-	if( pBlock < 0 ) {
-		command->hasError = true;
-		return ;
+	if( pBlock >= 0 ) {
+		char* j = (blocks[pBlock]->file).data;
+		for( int i=0; i<directory.numberOfFiles; i++ ) {
+			char* pName = (directory.files[i]).name;
+
+			while( (*j++ = *pName++) != '\0' );
+			*(j-1) = '\n';
+		}
+		*j = '\0';
+		command->request = 1;
+	}
+	else {
+		command->hasError = NO_PID;
 	}
 
-	char* j = (blocks[pBlock]->file).data;
-	for( int i=0; i<directory.numberOfFiles; i++ ) {
-		char* pName = (directory.files[i]).name;
-
-		while( (*j++ = *pName++) != '\0' );
-		*j++ = '\n';
-	}
-	*j = '\0';
-	command->request = 1;
-	command->type = 0;
+	while( command->pid != 0 );
 }
 
 void Server::putFile( void )
 {
-	if( directory.numberOfFiles >= MAX_FILE_NUMBER ) {
-		command->hasError = true;
-	}
-	else {
+	if( directory.numberOfFiles < MAX_FILE_NUMBER ) {
 		int pBlock = findBlock( command->pid );
 		if( pBlock >= 0 ) {
 			directory.addFile( blocks[pBlock]->file );
+			command->request = 1;
+			while( command->pid != 0 );
 		}
 		else {
-			command->hasError = true;
+			command->hasError = NO_PID;
 		}
+	}
+	else {
+		command->hasError = NO_DIR;
 	}
 }
 
@@ -123,14 +141,15 @@ void Server::getFile( void )
 		}
 
 		if( i == directory.numberOfFiles ) {
-			command->hasError = true;
+			command->hasError = NO_FILE;
 		}
 		else {
 			command->request = 1;
+			while( command->pid != 0 );
 		}
 	}
 	else {
-		command->hasError = true;
+		command->hasError = NO_PID;
 	}
 }
 
@@ -144,7 +163,7 @@ bool Server::hasNewCommand( void )
 	struct sembuf sem;
 	memset( &sem, 0, sizeof(sem) );
 	semop( semid, &sem, 1 );
-	while( command->type != 0 ) ;
+	while( command->type == 0 ) ;
 	return true;
 }
 
