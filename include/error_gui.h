@@ -3,7 +3,6 @@
 
 #include <QDialog>
 #include <stdint.h>
-#include <shared_memory.h>
 
 class QLabel;
 class QPushButton;
@@ -12,7 +11,7 @@ class ErrorDialog : public QDialog
 {
 	Q_OBJECT
 public:
-	ErrorDialog( QWidget* parent );
+	ErrorDialog( QWidget* parent = 0 );
 	~ErrorDialog( void );
 	void setError( int type );
 

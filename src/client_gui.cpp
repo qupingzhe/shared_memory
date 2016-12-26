@@ -2,10 +2,14 @@
 #include <QTextBrowser>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include <stdio.h>
-#include "client_gui.h"
+
+#include "success_gui.h"
 #include "error_gui.h"
-#include <client.h>
+#include "putting_gui.h"
+#include "getting_gui.h"
+#include "client.h"
+
+#include "client_gui.h"
 
 ClientMainWindow::ClientMainWindow( void )
 {
@@ -32,7 +36,11 @@ void ClientMainWindow::initiate( void )
 
 	client = new Client();
 	file = new File_t();
+	successDialog = new SuccessDialog( this );
 	errorDialog = new ErrorDialog( this );
+	gettingDialog = new GettingDialog( file, this );
+	puttingDialog = new PuttingDialog( file, this );
+
 }
 
 void ClientMainWindow::initiateConnection( void )
@@ -41,12 +49,18 @@ void ClientMainWindow::initiateConnection( void )
 			this, SLOT(applyBlock()) );
 	connect( releasingBlockButton, SIGNAL(clicked()),
 			this, SLOT(releaseBlock()) );
-	connect( gettingFileButton, SIGNAL(clicked()),
-			this, SLOT(getFile()) );
-	connect( puttingFileButton, SIGNAL(clicked()),
-			this, SLOT(putFile()) );
 	connect( showingDirectoryButton, SIGNAL(clicked()),
 			this, SLOT(showDirectory()) );
+
+	connect( gettingFileButton, SIGNAL(clicked()),
+			gettingDialog, SLOT(openDialog()) );
+	connect( gettingDialog, SIGNAL(finishInput()),
+			this, SLOT(getFile()) );
+
+	connect( puttingFileButton, SIGNAL(clicked()),
+			puttingDialog, SLOT(openDialog()) );
+	connect( puttingDialog, SIGNAL(finishInput()),
+			this, SLOT(putFile()) );
 }
 
 void ClientMainWindow::initiateLayout( void )
@@ -83,14 +97,21 @@ ClientMainWindow::~ClientMainWindow( void )
 	delete puttingFileButton;
 	delete showingDirectoryButton;
 	delete textEdit;
+
+	delete client;
+	delete successDialog;
+	delete errorDialog;
+	delete gettingDialog;
+	delete puttingDialog;
+
+	delete mainWidget;
 }
 
 void ClientMainWindow::applyBlock( void )
 {
 	int errorFlag = client->applyBlock();
 	if( !errorFlag ) {
-		//SuccessWindow( APPLY ).show();
-
+		successDialog->setSuccess( APPLY );
 	}
 	else {
 		errorDialog->setError( errorFlag );
@@ -99,9 +120,9 @@ void ClientMainWindow::applyBlock( void )
 
 void ClientMainWindow::releaseBlock( void )
 {
-	int errorFlag = client->releaseBlock();;
+	int errorFlag = client->releaseBlock();
 	if( !errorFlag ) {
-
+		successDialog->setSuccess( RELEASE );
 	}
 	else {
 		errorDialog->setError( errorFlag );
@@ -110,7 +131,8 @@ void ClientMainWindow::releaseBlock( void )
 
 void ClientMainWindow::getFile( void )
 {
-	int errorFlag = client->getFile();;
+	client->setFile( file );
+	int errorFlag = client->getFile();
 	if( !errorFlag ) {
 		client->getFile( file );
 		textEdit->setPlainText( QString(file->data) );
@@ -123,9 +145,10 @@ void ClientMainWindow::getFile( void )
 
 void ClientMainWindow::putFile( void )
 {
-	int errorFlag = client->putFile();;
+	client->setFile( file );
+	int errorFlag = client->putFile();
 	if( !errorFlag ) {
-
+		//SuccessWindow( APPLY ).show();
 	}
 	else {
 		errorDialog->setError( errorFlag );
@@ -134,7 +157,7 @@ void ClientMainWindow::putFile( void )
 
 void ClientMainWindow::showDirectory( void )
 {
-	int errorFlag = client->showDirectory();;
+	int errorFlag = client->showDirectory();
 	if( !errorFlag ) {
 		client->getFile( file );
 		textEdit->setPlainText( QString(file->data) );

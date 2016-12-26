@@ -1,17 +1,22 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 #include <string.h>
+#include <stdio.h>
 
-#include <client.h>
+#include "client.h"
 
 struct sembuf Client::semP = { 0, -1, 0 };
 struct sembuf Client::semV = { 0, 1, 0 };
 
-Client::Client( void ) : SharedMemory( 0 ) { }
+Client::Client( void ) : SharedMemory( 0 )
+{
+	file = NULL;
+}
 
 
 Client::~Client( void )
 {
+	releaseBlock();
 	shmdt( address );
 }
 
@@ -19,30 +24,40 @@ Client::~Client( void )
 int Client::applyBlock( void )
 {
 	errorFlag = 0;
-	setCommand( APPLY );
-	hasNewCommand();
-	if( !command->hasError ) {
-		file = (File_t*)((char*)address + command->request );
+	if( file == NULL ) {
+		setCommand( APPLY );
+		hasNewCommand();
+		if( !command->hasError ) {
+			file = (File_t*)((char*)address + command->request );
+		}
+		else {
+			errorFlag = command->hasError;
+		}
+		resetCommand();
 	}
 	else {
-		errorFlag = command->hasError;
+		errorFlag = HAS_BLOCK;
 	}
-	resetCommand();
 	return errorFlag;
 }
 
 int Client::releaseBlock( void )
 {
 	errorFlag = 0;
-	setCommand( RELEASE );
-	hasNewCommand();
-	if( !command->hasError ) {
-
+	if( file != NULL ) {
+		setCommand( RELEASE );
+		hasNewCommand();
+		if( !command->hasError ) {
+			file = NULL;
+		}
+		else {
+			errorFlag = command->hasError;
+		}
+		resetCommand();
 	}
 	else {
-		errorFlag = command->hasError;
+		errorFlag = NO_BLOCK;
 	}
-	resetCommand();
 	return errorFlag;
 }
 
@@ -50,30 +65,40 @@ int Client::releaseBlock( void )
 int Client::putFile( void )
 {
 	errorFlag = 0;
-	setCommand( PUT );
-	hasNewCommand();
-	if( !command->hasError ) {
+	if( file != NULL ) {
+		setCommand( PUT );
+		hasNewCommand();
+		if( !command->hasError ) {
 
+		}
+		else {
+			errorFlag = command->hasError;
+		}
+		resetCommand();
 	}
 	else {
-		errorFlag = command->hasError;
+		errorFlag = NO_BLOCK;
 	}
-	resetCommand();
 	return errorFlag;
 }
 
 int Client::getFile( void )
 {
 	errorFlag = 0;
-	setCommand( GET );
-	hasNewCommand();
-	if( !command->hasError ) {
+	if( file != NULL ) {
+		setCommand( GET );
+		hasNewCommand();
+		if( !command->hasError ) {
 
+		}
+		else {
+			errorFlag = command->hasError;
+		}
+		resetCommand();
 	}
 	else {
-		errorFlag = command->hasError;
+		errorFlag = NO_BLOCK;
 	}
-	resetCommand();
 	return errorFlag;
 }
 
@@ -81,22 +106,30 @@ int Client::getFile( void )
 int Client::showDirectory( void )
 {
 	errorFlag = 0;
-	setCommand( SHOW );
-	hasNewCommand();
-	if( !command->hasError ) {
+	if( file != NULL ) {
+		setCommand( SHOW );
+		hasNewCommand();
+		if( !command->hasError ) {
 
+		}
+		else {
+			errorFlag = command->hasError;
+		}
+		resetCommand();
 	}
 	else {
-		errorFlag = command->hasError;
+		errorFlag = NO_BLOCK;
 	}
-	resetCommand();
 	return errorFlag;
 }
 
 
 bool Client::hasNewCommand( void )
 {
-	while( !(command->hasError)  && !(command->request) );
+	while( !(command->hasError)  && !(command->request) )
+	{
+		putchar(0);
+	}
 	return true;
 }
 

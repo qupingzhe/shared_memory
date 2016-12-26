@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <stdint.h>
 
-#include <shared_memory.h>
+#include "shared_memory.h"
 
 class Client : public SharedMemory
 {

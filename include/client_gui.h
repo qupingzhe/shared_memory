@@ -5,8 +5,12 @@
 
 class QPushButton;
 class QTextEdit;
+
 class Client;
+class SuccessDialog;
 class ErrorDialog;
+class PuttingDialog;
+class GettingDialog;
 struct File_t;
 
 class ClientMainWindow : public QMainWindow
@@ -39,7 +43,10 @@ private:
 
 	Client* client;
 	struct File_t* file;
+	SuccessDialog* successDialog;
 	ErrorDialog* errorDialog;
+	GettingDialog* gettingDialog;
+	PuttingDialog* puttingDialog;
 
 };
 

@@ -3,18 +3,26 @@
 ######################################################################
 
 TEMPLATE = app
-TARGET = share
+TARGET = client_gui
 DEPENDPATH += . include lib src
 INCLUDEPATH += . include src
 
 # Input
-HEADERS += include/client.h \
+HEADERS += include/shared_memory_def.h \
+           include/shared_memory.h \ 
+		   include/client.h \
            include/server.h \
-           include/server_def.h \
-           include/shared_memory.h \
-		   include/client_gui.h \
-		   include/error_gui.h
-SOURCES += src/client_gui.cpp \
+		   include/success_gui.h \
+		   include/error_gui.h \
+		   include/putting_gui.h \
+		   include/getting_gui.h \
+		   include/client_gui.h
+
+SOURCES += src/shared_memory.cpp \
+		   src/client.cpp \
+		   src/client_gui.cpp \
+		   src/success_gui.cpp \
            src/error_gui.cpp \
-           src/main.cpp 
-LIBS += -L lib -l shm
+		   src/putting_gui.cpp \
+		   src/getting_gui.cpp \
+           src/client_gui_main.cpp 

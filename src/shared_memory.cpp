@@ -5,13 +5,13 @@
 #include <sys/sem.h>
 #include <string.h>
 
-#include <shared_memory.h>
+#include "shared_memory.h"
 
 union semun
 {
 	int val;
 	struct semid_ds* buf;
-	unsigned short * array;
+	unsigned short* array;
 };
 
 SharedMemory::SharedMemory( int size )
@@ -31,6 +31,11 @@ SharedMemory::SharedMemory( int size )
 	information = (Information_t*)((char*)address + sizeof(Command_t) );
 }
 
+SharedMemory::~SharedMemory( void )
+{
+	command = NULL;
+	information = NULL;
+}
 uint8_t SharedMemory::getCommandType( void )
 {
 	return command->type;

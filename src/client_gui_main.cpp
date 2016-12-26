@@ -4,8 +4,9 @@
 int main( int argc, char** argv )
 {
 	QApplication app( argc, argv );
-	ClientMainWindow* clientMainWindow = new ClientMainWindow();
-	clientMainWindow->show();
+	ClientMainWindow clientMainWindow;
+	clientMainWindow.show();
 	return app.exec();
+
 }
 
